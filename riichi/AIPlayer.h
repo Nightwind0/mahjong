@@ -3,6 +3,8 @@
 
 namespace Mahjong { 
 
+  namespace Riichi { 
+
   class AIPlayer : public Player {
   public:
     AIPlayer();
@@ -17,5 +19,7 @@ namespace Mahjong {
     std::vector<Hand> generate_potential_hands();
 
   };
+
+  }
 
 }
