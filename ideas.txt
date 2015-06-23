@@ -1,0 +1,119 @@
+  // General strategy:
+  
+  // Evaluate current hand as a possibility in case we drew a winning hand
+  // This implies that the game rules will just return a 0 as a Score for
+  // an incomplete hand
+
+  // Look for interesting "companion" tiles. 
+  // Start by looking for any kantsu
+
+  // Then, look for any ankou or anjun
+
+  // Then look for any pairs
+  // Or any sequences that are missing one, starting with outside waits
+  // and then middle waits
+
+
+
+  // Now we have a list of companions to start with. 
+
+
+
+
+Better yet. Is it feasible to pre-generate a table of all 
+winning mahjong hands by yaku, their han, and fu? And then a consolidation step
+because some hands will qualify for multiple yaku, in which case their
+han and fu should be the sum of all the ones that fit together?
+
+BIG QUESTION: How large would this table be?
+
+And then, we just run our current hand down the table and check the "edit distance"
+to the hand, and multiplying together the probabilities of each edit , giving us
+a probability of acheiving that hand, and then we multiply that by the han and fun
+of that hand. Then we make the discard that gets us closer to that hand
+(If we have multiple potential discards, maybe look at how many alternate hands
+use each potential discard and discard the one that comes up the least? Andr maybe something where we penalize potential discards by the chances that someone else is waiting on it?)
+
+Analysis of this table:
+Manzen tsumo is gonna be a pretty huge number of possibilities. Probably by far the largest. 
+A good conservative estimate for the size of our table will be the size of manzen tsumo * 37 for the 37 yaku. That may be too high by orders of magnitude, though.
+
+How many melds are there?
+1,2,3 sequences times 3 suits, times 4 of each tile (You could have the same sequence 4 times) gives 48 different 1,2,3 sequences. 
+2,3,4
+3,4,5
+4,5,6
+5,6,7
+6,7,8
+7,8,9
+= 7 x 3 = 21 unique sequences
+
+how many triplets are there?
+34 
+
+how many quads are there? 
+34
+
+how many pairs are there?
+34 
+
+So, how many possible manzen tsumos are there?         //336*34*34*68 = 26,412,288
+
+
+Actually, come to think of it... the manzen tsumo figure of 26412288 actually
+should contain ALL of the other yaku with the exception of weird ones
+like kokushi, ryanpeikou and chitoitsu
+
+
+But wait, is that right? I think that number is too high because you can only
+have 3 melds and one pair (ignoring the weird yaku hands)
+
+Hmmm..... 3 melds. The first meld could be one of 21 different sequences. (7 numeric times 3 suits), or one of 34 triplets or one of 34 quads, for a total of 89 possibilities
+
+So really its 89 * 89 * 89 = 704969, times 34 pairs = 23,968,946
+Except slightly less than that, because some combinations use up all 4 of one tile).
+Like you can only have a quad of any given tile once...
+But in general its around 24 million winning hands, plus a few weird ones. 
+
+Wait! The combinations with repition 89Cr3 is 121485. Times 34 =  4130490. Only 4.1 million!  
+
+
+That's not that bad... is it?
+I could store the han in a byte, and the fu in a byte, and the yaku that apply to the hand as a bitfield with 40 bits which is 5 bytes... and find a scheme to look up an index by hand, couldn't I? Meaning each entry may only need to be 7 bytes? Let's assume 8 for now. Then,
+my table is 191,751,568 bytes or about 183MB. That seems reasonable to me..... 
+But its much larger if I need to store the hand on each entry. 
+Then we can special case the weird yaku, they don't use the table, maybe. 
+
+Actually I can encode hands by always using the same sorting rules and then treating each tile as a base 34 digit. 
+However, then the number space includes not only winning hands but ALL combinations.... so my table would need 
+an index of 92 bits
+
+But I'm not sure I need a table at all. I can calculate the fu, I know the han if i know which yaku apply, and I can have an array
+of yaku which i can query to see which ones apply...
+
+
+So now actually I can generate winning hands and it becomes my original scheme, except instead of 4 quadrillion combos theres only 24 million. 
+And I could probably search those in a smart way. 
+
+
+
+
+
+
+
+
+////
+
+
+So here's another idea. Find a way to explore this same space dynamically, with
+pruning. 
+	 For example, start with the highest scoring yakus, and dynamically start evaluating expected values.. and then you keep a "best" and you somehow stop looking at yaku hands when they don't beat your best or something?
+
+OR maybe you do this in iterations where you start with only allowing 1 tile change?
+
+
+
+
+
+
+
